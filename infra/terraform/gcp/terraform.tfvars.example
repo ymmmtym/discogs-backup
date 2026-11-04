@@ -1,0 +1,15 @@
+# コピーして terraform.tfvars を作成する（terraform.tfvars は .gitignore 済み）
+project_id      = "your-gcp-project-id"
+billing_account = "" # 予算アラートを作る場合のみ設定
+region          = "asia-northeast1"
+bucket_name     = "your-gcp-project-id-discogs-backups"
+
+service_name   = "discogs-backup"
+backup_prefix  = "discogs"
+backup_format  = "csv"
+schedule       = "0 3 * * *"
+timezone       = "Asia/Tokyo"
+retention_days = 90
+
+# 任意: イメージを自分で指定する場合
+# image = "asia-northeast1-docker.pkg.dev/your-gcp-project-id/discogs-backup/discogs-backup:latest"

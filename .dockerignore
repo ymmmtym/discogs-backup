@@ -1,0 +1,17 @@
+.git
+.jj
+.github
+discogs_backups
+__pycache__
+.venv
+.pytest_cache
+tests
+pytest.ini
+requirements-dev.txt
+*.pyc
+*.pyo
+.env
+.mise.local.toml
+infra
+*.md
+.DS_Store

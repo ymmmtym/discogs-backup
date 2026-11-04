@@ -1,0 +1,4 @@
+flask>=3.0
+gunicorn>=22.0
+fsspec>=2024.6.0
+tzdata>=2024.1

@@ -1,0 +1,3 @@
+# 開発・テスト用（本番イメージには含めない）
+-r requirements.txt
+pytest>=8.0

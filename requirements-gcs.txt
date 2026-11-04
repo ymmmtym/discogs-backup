@@ -1,0 +1,2 @@
+# Google Cloud Storage (gs://) 用バックエンド
+gcsfs>=2024.6.0
