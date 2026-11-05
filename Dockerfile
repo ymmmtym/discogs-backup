@@ -3,7 +3,7 @@
 # どのクラウドでも同じイメージを使い、保存先だけ BACKUP_DEST で切り替える。
 #   docker build --build-arg STORAGE_BACKEND=gcs -t discogs-backup .
 #   STORAGE_BACKEND: gcs | s3 | azure | none
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 ARG STORAGE_BACKEND=gcs
 
