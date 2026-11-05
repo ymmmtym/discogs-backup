@@ -8,7 +8,9 @@ Discogs のコレクション / ウォントリストをバックアップする
 - `storage.py` — 保存先の抽象化（fsspec 経由で `file://` / `gs://` / `s3://` / `az://`）
 - `worker.py` — `MODE=http`（サーバ）/ `MODE=job`（単発）の共通エントリポイント
 - `Dockerfile` / `requirements*.txt` — `STORAGE_BACKEND=gcs|s3|azure` で保存先バックエンドを選択
-- `infra/terraform/gcp/` — GCP（Cloud Run + Cloud Scheduler + GCS）用 Terraform
+- `.github/workflows/ci.yml` — pytest と PR 時の Docker ビルド
+- `.github/workflows/release.yml` — main push / `v*.*.*` タグで GHCR へイメージを push
+- `infra/README.md` — デプロイ手順（Terraform は別リポジトリ）
 
 ## ルール
 
@@ -17,8 +19,10 @@ Discogs のコレクション / ウォントリストをバックアップする
 - 出力形式は `--format` / `BACKUP_FORMAT`（csv / json / both）
 - ローカル実行の既定保存先は `./discogs_backups/`（`DISCOGS_BACKUP_DIR` で変更可）
 - 動作確認は `python3 discogs_backup.py --format csv` と `python3 worker.py job`（`BACKUP_DEST` をローカルに）
-- Terraform は `terraform fmt -recursive` と `terraform validate` を通すこと
+- Terraform は別リポジトリ `ymmmtym/gcp` で管理する。このリポジトリには置かない
 
 ## デプロイ
 
-`infra/README.md` を参照。Terraform では secret の入れ物だけ作り、値は `gcloud secrets versions add` で投入する（state に残さない）。
+`infra/README.md` を参照。main push で GHCR にイメージが push され、Terraform（`ymmmtym/gcp`）では secret の入れ物だけ作り、値は `gcloud secrets versions add` で投入する（state に残さない）。
+
+Cloud Run は `:latest` を push しても自動再デプロイされないため、イメージ更新時は `gcloud run services update` で明示的に反映する。

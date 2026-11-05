@@ -56,13 +56,16 @@ source .venv/bin/activate
 pytest
 ```
 
-CI（`.github/workflows/ci.yml`）では pytest / `terraform validate` / Docker ビルドを実行します。
+CI（`.github/workflows/ci.yml`）では pytest と Docker ビルドを実行します。main への push と `v*.*.*` タグでは `.github/workflows/release.yml` が GHCR へイメージを push します。
 
 ## コンテナ
 
 ```bash
 # GCS 向け
 docker build --build-arg STORAGE_BACKEND=gcs -t discogs-backup .
+
+# GHCR から取得（main push で自動ビルド）
+docker pull ghcr.io/ymmmtym/discogs-backup:latest
 
 # 単発実行
 docker run --rm -e DISCOGS_PERSONAL_ACCESS_TOKEN -e DISCOGS_USERNAME \
@@ -78,16 +81,16 @@ curl -X POST -H "Authorization: Bearer secret" localhost:8080/run
 
 ## クラウドでの定期実行
 
-GCP（Cloud Run + Cloud Scheduler + GCS）用の Terraform を `infra/terraform/gcp/` に用意しています。
-手順・無料枠の見積り・他クラウドへの対応表は [infra/README.md](infra/README.md) を参照してください。
+GCP（Cloud Run + Cloud Scheduler + GCS）の Terraform は別リポジトリ [`ymmmtym/gcp`](https://github.com/ymmmtym/gcp) で管理しています。
+このリポジトリではコンテナイメージを GHCR に配布するところまでを担当します。
 
 ```bash
-cd infra/terraform/gcp
-cp terraform.tfvars.example terraform.tfvars
-# 以降は infra/README.md の手順 1〜4
+# main に push すると GitHub Actions が ghcr.io/ymmmtym/discogs-backup:latest を更新
+git push origin main
 ```
 
-毎日 03:00（Asia/Tokyo）に実行され、`gs://<bucket>/discogs/YYYY-MM-DD/` に保存されます。
+毎日 03:00（Asia/Tokyo）に実行され、`gs://<bucket>/discogs-backup/YYYY-MM-DD/` に保存されます。
+手順・無料枠の見積り・他クラウドへの対応表は [infra/README.md](infra/README.md) を参照してください。
 
 ## 構成
 
@@ -96,10 +99,9 @@ discogs_backup.py   # API 取得・CSV/JSON 生成（クラウド SDK 非依存�
 storage.py          # 保存先抽象化（fsspec）
 worker.py           # MODE=http / MODE=job エントリポイント
 Dockerfile          # クラウド非依存イメージ
-cloudbuild.yaml     # Cloud Build 用ビルド定義
 tests/              # pytest（Discogs API はモック）
-.github/workflows/  # CI（pytest / terraform validate / docker build）
-infra/              # Terraform（GCP）
+.github/workflows/  # CI（pytest / docker build）と GHCR push
+infra/              # デプロイ手順（Terraform は ymmmtym/gcp）
 ```
 
 ## リストアについて
