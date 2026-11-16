@@ -2,5 +2,25 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "platformAutomerge": false,
+  "packageRules": [
+    {
+      "description": "Automerge non-major updates once CI is green. Major updates stay open for review.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Never automerge GitHub Actions updates: .github/workflows/actions.lock pins resolved commits and CI runs `gh actions-lock --verify`. Advance pins deliberately with `gh actions-lock --relock`.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "automerge": false
+    }
   ]
 }
