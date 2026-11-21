@@ -12,13 +12,17 @@ fsspec 経由なので、`BACKUP_DEST` のスキームを変えるだけで保�
 
     <dest>/<key_prefix>/collection.csv
     <dest>/<key_prefix>/wantlist.csv
+    <dest>/latest/collection.csv      # 最新実行の出力
+    <dest>/latest/wantlist.csv
     <dest>/latest.json                # 最新実行のサマリ
 """
 
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -66,7 +70,7 @@ def save_outputs(
     key_prefix: str,
     manifest: dict | None = None,
 ) -> list[str]:
-    """local_dir 内のファイルを dest/key_prefix/ に保存し、保存先の一覧を返す。"""
+    """出力を日付別ディレクトリと latest/ に保存し、保存先一覧を返す。"""
     local_dir = Path(local_dir)
     files = sorted(p for p in local_dir.iterdir() if p.is_file())
     if not files:
@@ -76,14 +80,27 @@ def save_outputs(
     saved: list[str] = []
 
     if scheme == "file":
-        target = Path(path).expanduser() / key_prefix
+        root = Path(path).expanduser()
+        target = root / key_prefix
+        latest = root / "latest"
         target.mkdir(parents=True, exist_ok=True)
+        latest.mkdir(parents=True, exist_ok=True)
         for f in files:
             shutil.copy2(f, target / f.name)
             saved.append(str(target / f.name))
+        for f in files:
+            alias = latest / f.name
+            with tempfile.NamedTemporaryFile(
+                dir=latest, prefix=f".{f.name}.", delete=False
+            ) as temporary:
+                temporary_path = Path(temporary.name)
+            try:
+                shutil.copy2(f, temporary_path)
+                os.replace(temporary_path, alias)
+            finally:
+                temporary_path.unlink(missing_ok=True)
+            saved.append(str(alias))
         if manifest is not None:
-            root = Path(path).expanduser()
-            root.mkdir(parents=True, exist_ok=True)
             manifest_path = root / MANIFEST_NAME
             manifest_path.write_bytes(_manifest_bytes(manifest))
             saved.append(str(manifest_path))
@@ -91,9 +108,15 @@ def save_outputs(
 
     fs, root = _url_to_fs(dest)
     base = f"{root.rstrip('/')}/{key_prefix}"
+    latest = f"{root.rstrip('/')}/latest"
     fs.makedirs(base, exist_ok=True)
+    fs.makedirs(latest, exist_ok=True)
     for f in files:
         remote = f"{base}/{f.name}"
+        fs.put_file(str(f), remote)
+        saved.append(f"{scheme}://{remote.lstrip('/')}")
+    for f in files:
+        remote = f"{latest}/{f.name}"
         fs.put_file(str(f), remote)
         saved.append(f"{scheme}://{remote.lstrip('/')}")
 
