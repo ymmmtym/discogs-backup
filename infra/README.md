@@ -20,6 +20,7 @@ Cloud Run (認証必須, max-instances=1, python:3.12 コンテナ)
         │ 環境変数: BACKUP_DEST=gs://<bucket>/discogs-backup
         ▼
 GCS  gs://<bucket>/discogs-backup/YYYY-MM-DD/{collection,wantlist}.csv
+     gs://<bucket>/discogs-backup/latest/{collection,wantlist}.csv
      gs://<bucket>/discogs-backup/latest.json
 ```
 
@@ -71,7 +72,7 @@ gcloud scheduler jobs run discogs-backup-daily --location us-central1
 gcloud storage ls -r gs://<bucket>/discogs-backup/ | tail
 ```
 
-`discogs-backup/YYYY-MM-DD/{collection,wantlist}.csv` と `discogs-backup/latest.json` が出力されれば成功です。
+`discogs-backup/YYYY-MM-DD/{collection,wantlist}.csv`、`discogs-backup/latest/{collection,wantlist}.csv`、および `discogs-backup/latest.json` が出力されれば成功です。固定パスで最新データを取得する場合は、たとえば `gcloud storage cp gs://<bucket>/discogs-backup/latest/wantlist.csv .` を実行します。
 
 ## イメージ更新時の注意
 

@@ -65,12 +65,14 @@ def test_run_saves_files_and_manifest(client, monkeypatch, tmp_path):
     assert body["status"] == "ok"
     assert body["collection"] == 120
     assert body["wantlist"] == 3
-    assert len(body["uploaded"]) == 3
+    assert len(body["uploaded"]) == 5
 
     dest = tmp_path / "dest"
     run_dir = dest / body["key_prefix"]
     assert (run_dir / "collection.csv").is_file()
     assert (run_dir / "wantlist.csv").is_file()
+    assert (dest / "latest" / "collection.csv").is_file()
+    assert (dest / "latest" / "wantlist.csv").is_file()
     manifest = json.loads((dest / "latest.json").read_text(encoding="utf-8"))
     assert manifest["collection"] == 120
     assert manifest["wantlist"] == 3

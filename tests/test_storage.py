@@ -36,10 +36,28 @@ def test_save_outputs_local(tmp_path):
 
     assert (dest / "2026-01-02" / "collection.csv").is_file()
     assert (dest / "2026-01-02" / "wantlist.csv").is_file()
+    assert (dest / "latest" / "collection.csv").is_file()
+    assert (dest / "latest" / "wantlist.csv").is_file()
     assert json.loads((dest / "latest.json").read_text(encoding="utf-8")) == {"k": 1}
     # マニフェストも戻り値に含める（リモート保存と同じ挙動）
-    assert len(saved) == 3
+    assert len(saved) == 5
     assert saved[-1].endswith("latest.json")
+
+
+def test_save_outputs_local_latest_aliases_all_formats(tmp_path):
+    src = _make_src(tmp_path)
+    (src / "collection.json").write_text("[]", encoding="utf-8")
+    (src / "wantlist.json").write_text("[]", encoding="utf-8")
+    dest = tmp_path / "dest"
+
+    storage.save_outputs(src, f"file://{dest}", "2026-01-02")
+
+    assert sorted(p.name for p in (dest / "latest").iterdir()) == [
+        "collection.csv",
+        "collection.json",
+        "wantlist.csv",
+        "wantlist.json",
+    ]
 
 
 def test_save_outputs_requires_files(tmp_path):
@@ -58,9 +76,13 @@ def test_save_outputs_remote_scheme(tmp_path):
     assert saved == [
         "memory://bucket/root/2026-01-02/collection.csv",
         "memory://bucket/root/2026-01-02/wantlist.csv",
+        "memory://bucket/root/latest/collection.csv",
+        "memory://bucket/root/latest/wantlist.csv",
         "memory://bucket/root/latest.json",
     ]
     fs, root = fsspec.core.url_to_fs("memory://bucket/root")
     assert fs.exists(f"{root}/2026-01-02/collection.csv")
+    assert fs.exists(f"{root}/latest/collection.csv")
+    assert fs.exists(f"{root}/latest/wantlist.csv")
     with fs.open(f"{root}/latest.json", "rb") as f:
         assert json.loads(f.read().decode("utf-8")) == {"k": 2}

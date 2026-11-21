@@ -89,7 +89,7 @@ GCP（Cloud Run + Cloud Scheduler + GCS）の Terraform は別リポジトリ [`
 git push origin main
 ```
 
-毎日 03:00（Asia/Tokyo）に実行され、`gs://<bucket>/discogs-backup/YYYY-MM-DD/` に保存されます。
+毎日 03:00（Asia/Tokyo）に実行され、`gs://<bucket>/discogs-backup/YYYY-MM-DD/` と `gs://<bucket>/discogs-backup/latest/` に保存されます。固定パスの `latest/` から最新の CSV / JSON を取得できます。
 手順・無料枠の見積り・他クラウドへの対応表は [infra/README.md](infra/README.md) を参照してください。
 
 ## 構成
