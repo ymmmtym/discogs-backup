@@ -20,7 +20,9 @@ fsspec 経由なので、`BACKUP_DEST` のスキームを変えるだけで保�
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -87,8 +89,17 @@ def save_outputs(
             shutil.copy2(f, target / f.name)
             saved.append(str(target / f.name))
         for f in files:
-            shutil.copy2(f, latest / f.name)
-            saved.append(str(latest / f.name))
+            alias = latest / f.name
+            with tempfile.NamedTemporaryFile(
+                dir=latest, prefix=f".{f.name}.", delete=False
+            ) as temporary:
+                temporary_path = Path(temporary.name)
+            try:
+                shutil.copy2(f, temporary_path)
+                os.replace(temporary_path, alias)
+            finally:
+                temporary_path.unlink(missing_ok=True)
+            saved.append(str(alias))
         if manifest is not None:
             manifest_path = root / MANIFEST_NAME
             manifest_path.write_bytes(_manifest_bytes(manifest))

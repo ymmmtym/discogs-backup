@@ -60,6 +60,30 @@ def test_save_outputs_local_latest_aliases_all_formats(tmp_path):
     ]
 
 
+def test_save_outputs_local_alias_copy_failure_preserves_previous_file(
+    tmp_path, monkeypatch
+):
+    src = _make_src(tmp_path)
+    dest = tmp_path / "dest"
+    latest = dest / "latest"
+    latest.mkdir(parents=True)
+    (latest / "collection.csv").write_text("previous\n", encoding="utf-8")
+    copy2 = storage.shutil.copy2
+
+    def fail_alias_copy(source, target):
+        if target.parent == latest:
+            raise OSError("copy failed")
+        return copy2(source, target)
+
+    monkeypatch.setattr(storage.shutil, "copy2", fail_alias_copy)
+
+    with pytest.raises(OSError, match="copy failed"):
+        storage.save_outputs(src, f"file://{dest}", "2026-01-02")
+
+    assert (latest / "collection.csv").read_text(encoding="utf-8") == "previous\n"
+    assert list(latest.iterdir()) == [latest / "collection.csv"]
+
+
 def test_save_outputs_requires_files(tmp_path):
     empty = tmp_path / "empty"
     empty.mkdir()
